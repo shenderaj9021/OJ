@@ -4,57 +4,54 @@ const bcrypt = require("bcrypt");
 const { generateToken } = require("../middlewares/JWT");
 const nodemailer = require("nodemailer");
 
-async function register(req, res) {
-  const record = req.body;
 
-  // checking if user already exists
-
+// Register a new user
+const register = async (req, res) => {
   try {
-    const userExist = await User.exists({ email: record.email });
-    console.log(userExist);
+    const { username, email, password } = req.body;
 
-    //process.env.Salt
-    const hashedPassword = await bcrypt.hash(
-      record.password,
-      parseInt(process.env.SaltRounds)
-    );
-    const response = await User.create({
-      name: record.name,
-      email: record.email,
+    // Check if the username or email is already in use
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username or email is already in use' });
+    }
+
+    // Hash the password before saving it to the database
+    const hashedPassword = await bcrypt.hash(password, 9);
+
+    // Create a new user
+    const newUser = new User({
+      username,
+      email,
       password: hashedPassword,
-      phone: record.phone,
-      type: record.type,
-      rules: [
-        {
-          houseNo: record.houseNo,
-          lane: record.lane,
-          city: record.city,
-          pincode: record.pincode,
-        },
-      ],
     });
 
-    const Token = await generateToken(response);
-    res.json({
-      Token,
-    });
+    await newUser.save();
+
+    // Create a JWT token for the user
+    const token = await generateToken(newUser);
+
+    res.status(201).json({ token, user: { id: newUser._id, username: newUser.username } });
   } catch (error) {
-    res.status(400).send(error.message);
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
-}
+};
 
-async function login(req, res) {
-  const record = req.body;
-  const userExist = await User.findOne({ email: record.email }).lean();
+// Login a user
+const login = async (req, res) => {
+ 
+  const {username,password} = req.body;
+  const userExist = await User.findOne({ username: username }).lean();
 
   if (!userExist) {
     return res.status(400).json({ msg: "Invalid Credentials" });
   }
 
-  const isMatch = await bcrypt.compare(record.password, userExist.password);
+  const isMatch = await bcrypt.compare(password, userExist.password);
 
   if (!isMatch) {
-    return res.status(400).json({ msg: "Invalid Credentials" });
+    return res.status(400).json({ msg: "Invalid Credentials 1" });
   }
 
   const token = await generateToken(userExist);
@@ -62,9 +59,10 @@ async function login(req, res) {
     ...userExist,
     token,
   });
-}
+};
 
-async function getProfile(req, res) {
+
+const getProfile = async(req, res)=> {
   const userID = req.body.userID;
   const profile = await User.findById(userID);
   if (!profile) {

@@ -5,36 +5,38 @@ const res = require("express/lib/response");
 const JWT = require("jsonwebtoken");
 
 async function generateToken(user) {
+
   const token = await JWT.sign(
     {
       id: user._id,
     },
-    process.env.Secret,
+    process.env.jwtSecret,
     {
-      expiresIn: 6000000,
+      expiresIn: 60000000000,
     }
   );
   return token;
 }
 
 async function checkToken(req, res, next) {
-  const token = req.headers["authorization"];
-  // console.log(token);
-  if (!token) {
-    return res.status(400).json({
-      msg: "No token found",
-    });
+
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  try {
-    const user = JWT.verify(token, process.env.Secret);
-    req.body.userID = user.id;
-  } catch (error) {
-    return res.status(400).json({
-      msg: "Token Invalid",
-    });
-  }
-  return next();
+  const token = authHeader.slice(7);
+ 
+  JWT.verify(token, process.env.jwtSecret, (err, decoded) => {
+    if (err) {
+     
+      return res.status(401).json({ message: 'Unauthorized 1' });
+    }
+  
+    req.user = decoded;
+    next();
+  });
 }
 
 module.exports = { generateToken, checkToken };
