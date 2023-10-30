@@ -26,7 +26,8 @@ const runSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-});
+    
+},  { _id: true, strict: false });
 
 const Run = mongoose.model('Run', runSchema);
 

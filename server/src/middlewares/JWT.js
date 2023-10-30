@@ -33,8 +33,8 @@ async function checkToken(req, res, next) {
      
       return res.status(401).json({ message: 'Unauthorized 1' });
     }
-  
-    req.user = decoded;
+    console.log("Decoded user is",decoded)
+    req.user = decoded.id;
     next();
   });
 }

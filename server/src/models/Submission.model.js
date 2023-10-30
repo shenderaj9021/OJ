@@ -27,7 +27,7 @@ const submissionSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-});
+},{ _id: true, strict: false });
 
 const Submission = mongoose.model('Submission', submissionSchema);
 

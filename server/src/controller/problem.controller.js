@@ -2,8 +2,7 @@ const Problem = require('../models/Problem.model');
 
 // Create a new problem
 const createProblem = async (req, res) => {
-  console.log("In controller")
-  console.log("req user ",req.user)
+
   try {
     const {
       title,
