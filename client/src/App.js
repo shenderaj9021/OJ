@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Switch,Routes } from 'react-router-dom'
 import ProblemList from './pages/ProblemList';
 import ProblemEditor from './pages/ProblemEditor';
 import Navbar from "./components/Navbar"
+import Login from './pages/Login';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Set initial login state
@@ -16,6 +17,7 @@ function App() {
         <Routes>
           <Route path="/ProblemList"  element={<ProblemList />} />
           <Route path="/problem/:id" element={<ProblemEditor/>} />
+          <Route path="/login" element={<Login />}  />
         </Routes>
       </Router>
       {/* Other components and content of your application */}
