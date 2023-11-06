@@ -9,7 +9,7 @@ const {
 
 const {checkToken} = require('../middlewares/JWT')
 solveRouter.post('/run',checkToken,runUserCode);
-solveRouter.get('/getRun',checkToken,getRun)
+solveRouter.post('/getRun',checkToken,getRun)
 solveRouter.get('/getAllRun',checkToken,getAllRun);
 
 solveRouter.post('/submit',checkToken,submitUserCode);

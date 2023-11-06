@@ -1,30 +1,29 @@
 import React, { useState } from 'react';
 import { connect } from "react-redux";
-import {login} from  "../store/actions"
-import {Requests } from '../utils/index';
-import { useNavigate } from "react-router-dom";
-import { Link } from 'react-router-dom';
 
-const Login = (props) => {
-  const [username, setUsername] = useState('');
+import {Requests } from '../utils/index';
+import { Link, useNavigate } from "react-router-dom";
+
+
+const Signup = () => {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username ,setUsername] = useState('');
   let navigate = useNavigate();
-  const handleLogin = async (e) => {
+  const handleSignup = (e) => {
     e.preventDefault();
-    // Handle login logic here
-    // setLoading(true);
     const values = {
         username: username,
-        password:password
+        password:password,
+        email:email
     }
-    console.log(values);
-    Requests.login(values)
-      .then((res) => {
+    // Handle signup logic here, for example, making an API request to your backend
+    // You can use Axios or any other HTTP library for this purpose
+    // Example using Axios:
+    Requests.register('/api/auth/signup',values)
+    .then((res) => {
         console.log(res)
-        localStorage.setItem("userinfo",res.data.token);
-        console.log("token after sotring ",localStorage.getItem('userinfo'))
-        props.login(res)
-        navigate("/");
+        navigate("/login");
         // setLoading(false);
       })
       .catch((err) => {
@@ -32,16 +31,30 @@ const Login = (props) => {
         console.log(err);
         // toast.error(err.response.data.error.message);
       });
+   
   };
 
   return (
-    <div className="container mx-auto p-4 flex justify-center items-center min-h-screen w-full">
+    <div className="container mx-auto p-4 flex justify-center items-center h-screen w-full">
       <div className="bg-white p-8 rounded shadow-md w-96">
-        <h2 className="text-2xl font-semibold mb-4">Login</h2>
-        <form onSubmit={handleLogin}>
+        <h2 className="text-2xl font-semibold mb-4">Signup</h2>
+        <form onSubmit={handleSignup}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-600 text-left">
               Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              className="mt-1 p-2 border rounded w-full"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label htmlFor="text" className="block text-sm font-medium text-gray-600 text-left">
+              Username
             </label>
             <input
               type="text"
@@ -69,29 +82,15 @@ const Login = (props) => {
             type="submit"
             className="bg-blue-500 text-white p-2 rounded hover:bg-blue-700 focus:outline-none focus:border-blue-700 focus:ring focus:ring-blue-200"
           >
-            Login
+            SignUp
           </button>
-          <div className="m-2">
-            Don't have account , <Link to="/signup"> Create one </Link>
-          </div>
         </form>
+        <div className="m-2">
+            Already have account? <Link to="/login" > Login</Link>
+        </div>
       </div>
     </div>
   );
 };
 
-
-function mapStateToProps(state) {
-    return {
-      isAuthenticated: state.isAuthenticated,
-    };
-  }
-  function mapActionToProps(dispatch) {
-    return {
-      login: (userData) => dispatch(login(userData)),
-    
-    };
-  }
-  
-export default connect(mapStateToProps, mapActionToProps)(Login);
-
+export default Signup;

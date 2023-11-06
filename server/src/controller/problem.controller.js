@@ -2,7 +2,8 @@ const Problem = require('../models/Problem.model');
 
 // Create a new problem
 const createProblem = async (req, res) => {
-
+ 
+  
   try {
     const {
       title,
@@ -15,7 +16,7 @@ const createProblem = async (req, res) => {
       memoryLimitInMB,
       testCases,
     } = req.body;
-    const creator = req.user.id; // Assuming you have user authentication middleware
+    const creator = req.user; // Assuming you have user authentication middleware
    
     const newProblem = new Problem({
       title,

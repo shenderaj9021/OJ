@@ -14,6 +14,7 @@ const runSchema = new mongoose.Schema({
         enum: ['Pending', 'Running', 'Completed', 'Failed'],
         default: 'Pending',
     },
+    input:String,
     output: String,
     error: String,
     passedTestCases: Number,

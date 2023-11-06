@@ -1,3 +1,3 @@
-import * as Requests from "./Requests";
+import * as Requests from "./request";
 
-export { Requests };
+export  {Requests }; 
