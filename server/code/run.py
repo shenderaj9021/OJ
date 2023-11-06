@@ -1,6 +1,4 @@
 # Your code here
-# Store input numbers
-num1 = int(input())
-num2 = int(input())
-sum = num1 + num2
-print(sum)
+n1 = int(input())
+n2 = int(inpu())
+sum

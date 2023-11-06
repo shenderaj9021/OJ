@@ -82,8 +82,8 @@ int main(){
     const data ={
       "language": "python",
       "code": values["Python"],
-      "input":problemdata.testCases[0].input,
-      "expectedOutput": problemdata.testCases[0].output
+      "testCases":problemdata.testCases
+  
     };
   
     // Send the initial request to run the code and get the runId
@@ -119,7 +119,7 @@ int main(){
               console.error("Error querying code status:", statusErr);
               clearInterval(intervalId); // Clear the interval on error
             });
-        }, 2000); // Interval set to 2 seconds (2000 milliseconds), adjust as needed
+        }, 10000); // Interval set to 2 seconds (2000 milliseconds), adjust as needed
       })
       .catch((err) => {
         console.error("Error running code:", err);

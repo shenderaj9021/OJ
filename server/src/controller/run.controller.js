@@ -4,7 +4,8 @@ const Run = require('../models/Run.model')
 const runUserCode = async (req, res) => {
 
   try {
-    const { language, code,input,expectedOutput,user} = req.body;
+    const { language, code,testCases,user} = req.body;
+    console.log("testcases in controller ", testCases);
     if (language && code) {
       // Validate the programming language (add more languages as needed)
       if (!['python', 'javascript', 'c++', 'java'].includes(language)) {
@@ -15,14 +16,13 @@ const runUserCode = async (req, res) => {
       const newRun = await new Run({});
       newRun.code = code;
       newRun.language = language;
-      newRun.expectedOutput = expectedOutput;
-      newRun.input = input;
+      newRun.testCases = testCases;
       newRun.createdBy =  user;
       const runid = newRun._id
       newRun.save();
       console.log(newRun._id)
       // Queue the user code for execution in the global queue
-      const job = await globalRunQueue.add({ language, code,input, expectedOutput,runid });
+      const job = await globalRunQueue.add({ language, code,testCases,runid });
        // Respond with the job ID for the user to check the execution status
       res.status(202).json({ message: 'Code execution queued', runId:newRun._id });
     }else{
