@@ -36,3 +36,17 @@ export const getRunInfo = async(data) =>{
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+export const submitCode = async (data) =>{
+  const  token = localStorage.getItem("userinfo")
+  console.log("token ",token);
+  return backend.post("/api/solve/submit",data,{
+    headers :{ Authorization: `Bearer ${token}`},
+  })
+}
+export const getSubmission = async (data) =>{
+  const token = localStorage.getItem('userinfo')
+  return backend.post("/api/solve/getSubmission",data,{
+    headers:{Authorization:`Bearer ${token}`}
+  })
+}

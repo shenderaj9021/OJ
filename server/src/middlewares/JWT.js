@@ -35,6 +35,8 @@ async function checkToken(req, res, next) {
     }
     console.log("Decoded user is",decoded)
     req.user = decoded.id;
+    req.body.user = decoded.id
+  
     next();
   });
 }

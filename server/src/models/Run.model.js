@@ -23,6 +23,7 @@ const runSchema = new mongoose.Schema({
         },
     ],
     error: String,
+    errorAt:Number,
     passedTestCases: Number,
     totalTestCases: Number,
     createdBy: {

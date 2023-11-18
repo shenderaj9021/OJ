@@ -3,18 +3,14 @@ import AceEditor from "react-ace";
 import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { Requests } from '../utils';
-
-
 // import 'ace-builds/src-noconflict/mode-javascript';
 import "ace-builds/src-noconflict/mode-c_cpp";
 import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/theme-github"; // Choose a theme
 import 'ace-builds/src-noconflict/theme-monokai';
-
 // import "brace/mode/c_cpp";
 import "brace/snippets/c_cpp";
-
 // import "brace/ext/language_tools";
 
 
@@ -23,7 +19,6 @@ const ProblemEditor = (props) => {
   const { problemId } = useParams();
   const [problemdata, setProblemdata] = useState({})
 
-  // const questionId = 1;
   const vals = {
     C: `#include <stdio.h>
 int main(){
@@ -48,9 +43,13 @@ int main(){
   const [testCaseInput, setTestCaseInput] = useState("");
   const [output, setOutput] = useState("");
   const [testCasesPassed, setTestCasesPassed] = useState(0);
+  const [defaultTestCases,setDefaultTestCases] = useState([]);
+  const [totalTestCases,setTotalTestCases] = useState(0);
   const [code, setCode] = useState("");
   const [lang, setLang] = useState("Python");
   const [values, setValues] = useState(vals);
+  const [running,setRunning] = useState(false);
+  const [submitting,setSubmitting] = useState(false);
 
   const languageIds = {
     Python: 71,
@@ -71,6 +70,7 @@ int main(){
         console.log("res ", response)
         console.log(response.data)
         await setProblemdata(response.data); // Update state with fetched problem data
+        await setDefaultTestCases(response.data.testCases);
 
       })
       .catch((error) => {
@@ -79,13 +79,13 @@ int main(){
   }, [problemId]);
   // Function to handle running the code
   const handleRunCode = () => {
+    setRunning(true);
     const data ={
       "language": "python",
       "code": values["Python"],
       "testCases":problemdata.testCases
-  
     };
-  
+
     // Send the initial request to run the code and get the runId
     Requests.runCode(data)
       .then((res) => {
@@ -101,28 +101,33 @@ int main(){
             .then((statusRes) => {
               const status = statusRes.data.status;
               console.log("Code execution status:", status);
-  
               // Check if the code execution is completed
               if (status === "Completed") {
                 // Code execution completed, do something with the result if needed
                 console.log("execution completed ", statusRes);
                 clearInterval(intervalId); // Clear the interval since the execution is completed
+                setTestCasesPassed(statusRes.data.passedTestCases)
+                setTotalTestCases(statusRes.data.totalcases)
                 console.log("execution completed ", statusRes);
+                setRunning(false);
               } else if (status === "failed") {
                 // Code execution failed, handle the failure if needed
                 clearInterval(intervalId); // Clear the interval
                 console.log("execution failed ", statusRes);
+                setRunning(false);
               }
             })
             .catch((statusErr) => {
               // Handle errors while querying the status if needed
               console.error("Error querying code status:", statusErr);
+              setRunning(false);
               clearInterval(intervalId); // Clear the interval on error
             });
         }, 10000); // Interval set to 2 seconds (2000 milliseconds), adjust as needed
       })
       .catch((err) => {
         console.error("Error running code:", err);
+        setRunning(false);
         // Handle the initial run code request error if needed
       });
   };
@@ -130,7 +135,58 @@ int main(){
 
   // Function to handle submitting the code
   const handleSubmitCode = () => {
-
+    setSubmitting(true);
+    const data ={
+      "language": "python",
+      "code": values["Python"],
+      "problemId":problemId,
+      "testCases":problemdata.testCases
+    };
+    console.log("sending data ", data)
+    // Send the initial request to run the code and get the runId
+    Requests.submitCode(data)
+      .then((res) => {
+        const submissionId = res.data.submissionId;
+        console.log("Code is running with SubmissionId:", submissionId);
+        const ob ={
+          "submissionId":submissionId
+        }
+        // Set up an interval to query the server every 2 seconds (adjust the interval as needed)
+        const intervalId = setInterval(() => {
+          // Query the server with the runId to get the status
+          Requests.getSubmission(ob)
+            .then((statusRes) => {
+              const status = statusRes.data.status;
+              console.log("Code execution status:", status);
+              // Check if the code execution is completed
+              if (status === "Completed") {
+                // Code execution completed, do something with the result if needed
+                console.log("execution completed ", statusRes);
+                clearInterval(intervalId); // Clear the interval since the execution is completed
+                setTestCasesPassed(statusRes.data.passedTestCases)
+                setTotalTestCases(statusRes.data.totalcases)
+                console.log("execution completed ", statusRes);
+                setSubmitting(false);
+              } else if (status === "failed") {
+                // Code execution failed, handle the failure if needed
+                clearInterval(intervalId); // Clear the interval
+                console.log("execution failed ", statusRes);
+                setSubmitting(false);
+              }
+            })
+            .catch((statusErr) => {
+              // Handle errors while querying the status if needed
+              console.error("Error querying code status:", statusErr);
+              setSubmitting(false);
+              clearInterval(intervalId); // Clear the interval on error
+            });
+        }, 10000); // Interval set to 2 seconds (2000 milliseconds), adjust as needed
+      })
+      .catch((err) => {
+        console.error("Error running code:", err);
+        setSubmitting(false);
+        // Handle the initial run code request error if needed
+      });
    };
 
   function onChange(newValue) {
@@ -263,7 +319,14 @@ int main(){
             onClick={handleRunCode}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300"
           >
-            Run
+          {
+              running ?  <div class="flex gap-2">
+                            <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+                            <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+                            <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+                          </div> 
+                      : <div className="px-6">Run</div>
+          }
           </button>
           <button
             onClick={handleSubmitCode}
@@ -271,7 +334,11 @@ int main(){
           >
             Submit
           </button>
-          <p>Test Cases Passed: {testCasesPassed}</p>
+          {
+            totalTestCases===0  ? <p></p>
+                                : <p>{testCasesPassed}/{totalTestCases} Testcases Passed</p>
+          }
+         
         </div>
       </div>
     </div>

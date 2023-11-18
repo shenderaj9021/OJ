@@ -2,9 +2,9 @@ const globalSubmissionQueue = require('../utility/submission.queue');
 const Submission = require('../models/Submission.model');
 
 const submitUserCode = async (req,res) =>{
-  console.log(req.body)
+
     try {
-        const { language,code,expectedOutput,problemId,user} = req.body;
+        const { language,code,problemId,testCases,user} = req.body;
         if (language && code) {
             // Validate the programming language (add more languages as needed)
             if (!['python', 'javascript', 'c++', 'java'].includes(language)) {
@@ -13,17 +13,16 @@ const submitUserCode = async (req,res) =>{
             const newSubmission = await new Submission({
               code:code,
               language:language,
-              expectedOutput:expectedOutput,
               problem:problemId,
-              user:user
-
+              user:user,
+              testCases:testCases
             });
-           
+            
       
             const submissionId = newSubmission._id
             newSubmission.save();
             // Queue the user code for execution in the global queue
-            const job = await globalSubmissionQueue.add({ language, code, expectedOutput,problemId,submissionId });
+            const job = await globalSubmissionQueue.add({ language,code,problemId,submissionId,testCases});
              // Respond with the job ID for the user to check the execution status
             res.status(202).json({ message: 'Code Submission queued', submissionId:newSubmission._id });
           }else{

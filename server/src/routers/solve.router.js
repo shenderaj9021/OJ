@@ -13,7 +13,7 @@ solveRouter.post('/getRun',checkToken,getRun)
 solveRouter.get('/getAllRun',checkToken,getAllRun);
 
 solveRouter.post('/submit',checkToken,submitUserCode);
-solveRouter.get('/getSubmission',checkToken,getSubmission);
+solveRouter.post('/getSubmission',checkToken,getSubmission);
 solveRouter.get('/allSubmission',checkToken,getAllSubmission)
 
 module.exports = solveRouter;

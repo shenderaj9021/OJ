@@ -18,6 +18,14 @@ const submissionSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    testCases:[
+        {
+            input: String,
+            output: String,
+        },
+    ],
+    passedTestCases:Number,
+    totalTestCases:Number,
     problem: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Problem',
@@ -27,6 +35,8 @@ const submissionSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    status:string,
+    errorAt:Number,
 },{ _id: true, strict: false });
 
 const Submission = mongoose.model('Submission', submissionSchema);

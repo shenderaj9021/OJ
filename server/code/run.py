@@ -1,4 +1,5 @@
 # Your code here
-n1 = int(input())
-n2 = int(inpu())
-sum
+x = int(input());
+y = int(input());
+sum =x+y
+print(sum)
