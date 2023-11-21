@@ -35,7 +35,7 @@ const submissionSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    status:string,
+    status:String,
     errorAt:Number,
 },{ _id: true, strict: false });
 

@@ -3,7 +3,8 @@ const {
     createProblem,
     updateProblemById,
     getAllProblems,
-    getProblemById
+    getProblemById,
+    
 } = require("../controller/problem.controller");
 const { checkToken } = require("../middlewares/JWT");
 

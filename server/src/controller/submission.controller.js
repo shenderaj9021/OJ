@@ -47,6 +47,19 @@ const getSubmission  = async (req,res) =>{
     res.status(401).send(err.message);
   }
 }
+const getProblemSubmission = async (req,res) =>{
+  console.log("req body is ",req.body)
+  try{
+    const pid = req.body.problemId;
+    const user  = req.body.user;
+    const submissions = await Submission.find({ user: user, problem: pid });
+    console.log("Submissions ",submissions)
+    res.send(submissions);
+  }catch(error){
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
 const getAllSubmission = async (req,res )=>{
   try {
     const allSub = await Submission.find({});
@@ -56,4 +69,4 @@ const getAllSubmission = async (req,res )=>{
   }
 }
 
-module.exports =  { submitUserCode,getSubmission,getAllSubmission}
+module.exports =  { submitUserCode,getSubmission,getAllSubmission,getProblemSubmission}

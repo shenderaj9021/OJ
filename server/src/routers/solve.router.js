@@ -4,7 +4,7 @@ const {
     runUserCode,getAllRun,getRun
 } = require('../controller/run.controller')
 const {
-    submitUserCode,getSubmission,getAllSubmission
+    submitUserCode,getSubmission,getAllSubmission,getProblemSubmission
 }  = require('../controller/submission.controller');
 
 const {checkToken} = require('../middlewares/JWT')
@@ -15,6 +15,7 @@ solveRouter.get('/getAllRun',checkToken,getAllRun);
 solveRouter.post('/submit',checkToken,submitUserCode);
 solveRouter.post('/getSubmission',checkToken,getSubmission);
 solveRouter.get('/allSubmission',checkToken,getAllSubmission)
+solveRouter.post('/getProblemSub', checkToken,getProblemSubmission)
 
 module.exports = solveRouter;
 

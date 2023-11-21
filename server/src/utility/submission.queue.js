@@ -46,17 +46,17 @@ function performAsyncOperation(inputString, submissionId) {
         if (stderr.includes('SyntaxError')) {
           console.error('Syntax Error:', stderr);
           console.log("Updating as syntax error ");
-          await Submission.findOneAndUpdate({ _id: submissionId }, { status: 'Completed', error: 'Compile Error' });
+          await Submission.findOneAndUpdate({ _id: submissionId }, { status: 'Completed', error: 'Compile Error',submissionStatus:'Failed', passedTestCases:0 });
           resolve("Error");
         } else if (stderr.includes('Time Limit Exceeded')) {
           console.error('Error: Time Limit Exceeded');
           console.log("updating as Tle ")
-          await Submission.findOneAndUpdate({ _id: submissionId }, { status: 'Completed', error: 'Time Limit Exceeded'});
+          await Submission.findOneAndUpdate({ _id: submissionId }, { status: 'Completed', error: 'Time Limit Exceeded',submissionStatus:'Failed',passedTestCases:0});
           resolve("Error");
         } else {
           console.error('Runtime Error:', stderr);
           console.log("Updating as runtime error")
-          await Submission.findOneAndUpdate({ _id: submissionId }, { status: 'Completed', error: 'Runtime Error'});
+          await Submission.findOneAndUpdate({ _id: submissionId }, { status: 'Completed', error: 'Runtime Error',submissionStatus:'Failed',passedTestCases:0});
           resolve("Error");
         }
         reject(stderr);
@@ -75,7 +75,7 @@ async function processTestCases(testCases, submissionId) {
 
       const stdout = await performAsyncOperation(inputString,submissionId);
       if (stdout === 'Error') {
-        await Submission.findOneAndUpdate({ _id: submissionId }, { errorAt: i + 1,passedTestCases: i });
+        await Submission.findOneAndUpdate({ _id: submissionId }, { errorAt: i + 1,passedTestCases: i,submissionStatus:"Failed" });
         passedCases = -1;
         break;
       } else {
@@ -84,7 +84,7 @@ async function processTestCases(testCases, submissionId) {
          if (res === 'Accepted') {
           passedCases++;
         }else{
-          await Submission.findOneAndUpdate({ _id: submissionId }, { errorAt: i + 1,passedTestCases: i,result:"Wrong Answer"});
+          await Submission.findOneAndUpdate({ _id: submissionId }, { errorAt: i + 1,passedTestCases: i,result:"Wrong Answer",submissionStatus:"Failed"});
           break;
         }
       }
@@ -110,8 +110,12 @@ const processSubmissionQueue = async (job) => {
           return res.status(500).send("Error saving code.");
         }
         passedCases = await processTestCases(testCases, submissionId);
+        console.log("passedcases in last one ", passedCases)
+        if(passedCases===testCases.length){
+          await submission.findOneAndUpdate({ _id: submissionId }, { status: 'Completed', error: '',  passedTestCases: passedCases, totalcases: testCases.length, submissionStatus:"Completed"})
+        }else
         if (passedCases != -1) {
-          await submission.findOneAndUpdate({ _id: submissionId }, { status: 'Completed', error: '',  totalcases: testCases.length })
+          await submission.findOneAndUpdate({ _id: submissionId }, { status: 'Completed', error: '',  passedTestCases: passedCases, totalcases: testCases.length, submissionStatus:"Failed"})
         }
        
     
