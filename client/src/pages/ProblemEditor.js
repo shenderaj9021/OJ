@@ -50,6 +50,12 @@ int main(){
   const [values, setValues] = useState(vals);
   const [running,setRunning] = useState(false);
   const [submitting,setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('description');
+  const [submissions,setSubmissions] = useState([]);
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
+
 
   const languageIds = {
     Python: 71,
@@ -76,6 +82,14 @@ int main(){
       .catch((error) => {
         console.error('Error fetching problem data:', error);
       });
+    Requests.getProblemSubmission({"problemId":problemId})
+    .then(async (response) =>{
+      console.log("The submission loist is ",response.data)
+      await setSubmissions(response.data)
+    } )
+    .catch((error)=>{
+      console.log("Error fetching Submission list : ",error)
+    })
   }, [problemId]);
   // Function to handle running the code
   const handleRunCode = () => {
@@ -203,7 +217,29 @@ int main(){
 
       {/* Left Part */}
       <div className="w-1/2 border-r border-gray-300 p-4">
-        <h1 className="text-2xl font-semibold mb-4">{problemdata.title}</h1>
+      <div className="flex mb-4">
+        <button
+          className={`mr-4 focus:outline-none ${
+            activeTab === 'description' ? 'font-semibold' : 'font-normal'
+          }`}
+          onClick={() => handleTabChange('description')}
+        >
+          Description
+        </button>
+        <button
+          className={`focus:outline-none ${
+            activeTab === 'submission' ? 'font-semibold' : 'font-normal'
+          }`}
+          onClick={() => handleTabChange('submission')}
+        >
+          Submission
+        </button>
+      </div>
+      <div>
+      {activeTab === 'description' && (
+          <>
+            {/* Your existing description content here */}
+            <h1 className="text-2xl font-semibold mb-4">{problemdata.title}</h1>
         <p><span className="font-bold">Description: </span>{problemdata.description}.</p>
         <p><span className="font-bold">Difficulty Level: </span>{problemdata.difficultyLevel}.</p>
         <p><span className="font-bold"> Input Format:</span>{problemdata.inputFormat}</p>
@@ -243,6 +279,41 @@ int main(){
           </div>
 
         </div>
+          </>
+        )}
+        {activeTab === 'submission' && (
+          <>
+                {submissions.length > 0 ? (
+        <ul>
+          {submissions.map((submission) => (
+              <li
+              key={submission._id}
+              className="border p-4 mb-4 rounded bg-gray-100"
+            >
+              <p>
+                <span className="font-bold">Status:</span> {submission.submissionStatus}
+              </p>
+              <p>
+                <span className="font-bold">Language:</span>{' '}
+                {submission.language}
+              </p>
+              <p>
+                <span className="font-bold">Timestamp:</span>{' '}
+                {new Date(submission.timestamp).toLocaleString()}
+              </p>
+              {/* Add more details as needed */}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No submissions available.</p>
+      )}
+
+            {/* Add code to display user's previous submissions */}
+          </>
+        )}
+      </div>
+       
       </div>
 
       {/* Right Part */}
