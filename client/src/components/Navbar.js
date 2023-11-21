@@ -6,7 +6,7 @@ const Navbar = (props) => {
   console.log("isauthenticated ", props.isAuthenticated)
   return (
     <nav className="bg-blue-500 p-4 flex justify-between items-center">
-      <div className="text-white text-lg font-semibold">Your Platform Name</div>
+      <div className="text-white text-lg font-semibold">BeatCode</div>
       <div className="space-x-4">
         <button className="text-white hover:text-gray-300 focus:outline-none">
           <Link  to="/ProblemList">

@@ -9,15 +9,13 @@ import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/theme-github"; // Choose a theme
 import 'ace-builds/src-noconflict/theme-monokai';
-// import "brace/mode/c_cpp";
 import "brace/snippets/c_cpp";
-// import "brace/ext/language_tools";
-
 
 
 const ProblemEditor = (props) => {
   const { problemId } = useParams();
   const [problemdata, setProblemdata] = useState({})
+
 
   const vals = {
     C: `#include <stdio.h>
@@ -38,20 +36,20 @@ int main(){
 }`,
     Python: `# Your code here`,
   };
-
   const [isCustomTestCase, setIsCustomTestCase] = useState(false);
   const [testCaseInput, setTestCaseInput] = useState("");
   const [output, setOutput] = useState("");
   const [testCasesPassed, setTestCasesPassed] = useState(0);
-  const [defaultTestCases,setDefaultTestCases] = useState([]);
-  const [totalTestCases,setTotalTestCases] = useState(0);
+  const [defaultTestCases, setDefaultTestCases] = useState([]);
+  const [totalTestCases, setTotalTestCases] = useState(0);
   const [code, setCode] = useState("");
   const [lang, setLang] = useState("Python");
   const [values, setValues] = useState(vals);
-  const [running,setRunning] = useState(false);
-  const [submitting,setSubmitting] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
-  const [submissions,setSubmissions] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [executedObj, setExecuteObj] = useState({});  // To maintain result of runed result
   const handleTabChange = (tab) => {
     setActiveTab(tab);
   };
@@ -82,22 +80,23 @@ int main(){
       .catch((error) => {
         console.error('Error fetching problem data:', error);
       });
-    Requests.getProblemSubmission({"problemId":problemId})
-    .then(async (response) =>{
-      console.log("The submission loist is ",response.data)
-      await setSubmissions(response.data)
-    } )
-    .catch((error)=>{
-      console.log("Error fetching Submission list : ",error)
-    })
+    Requests.getProblemSubmission({ "problemId": problemId })
+      .then(async (response) => {
+        console.log("The submission loist is ", response.data)
+        await setSubmissions(response.data)
+      })
+      .catch((error) => {
+        console.log("Error fetching Submission list : ", error)
+      })
   }, [problemId]);
   // Function to handle running the code
   const handleRunCode = () => {
     setRunning(true);
-    const data ={
+    setTestCasesPassed(0)
+    const data = {
       "language": "python",
       "code": values["Python"],
-      "testCases":problemdata.testCases
+      "testCases": problemdata.testCases
     };
 
     // Send the initial request to run the code and get the runId
@@ -105,8 +104,8 @@ int main(){
       .then((res) => {
         const runId = res.data.runId;
         console.log("Code is running with runId:", runId);
-        const ob ={
-          "runId":runId
+        const ob = {
+          "runId": runId
         }
         // Set up an interval to query the server every 2 seconds (adjust the interval as needed)
         const intervalId = setInterval(() => {
@@ -118,16 +117,15 @@ int main(){
               // Check if the code execution is completed
               if (status === "Completed") {
                 // Code execution completed, do something with the result if needed
-                console.log("execution completed ", statusRes);
+
+                setExecuteObj(statusRes.data);
                 clearInterval(intervalId); // Clear the interval since the execution is completed
                 setTestCasesPassed(statusRes.data.passedTestCases)
                 setTotalTestCases(statusRes.data.totalcases)
-                console.log("execution completed ", statusRes);
                 setRunning(false);
               } else if (status === "failed") {
                 // Code execution failed, handle the failure if needed
                 clearInterval(intervalId); // Clear the interval
-                console.log("execution failed ", statusRes);
                 setRunning(false);
               }
             })
@@ -145,25 +143,24 @@ int main(){
         // Handle the initial run code request error if needed
       });
   };
-  
+
 
   // Function to handle submitting the code
   const handleSubmitCode = () => {
     setSubmitting(true);
-    const data ={
+    const data = {
       "language": "python",
       "code": values["Python"],
-      "problemId":problemId,
-      "testCases":problemdata.testCases
+      "problemId": problemId,
+      "testCases": problemdata.testCases
     };
     console.log("sending data ", data)
     // Send the initial request to run the code and get the runId
     Requests.submitCode(data)
       .then((res) => {
         const submissionId = res.data.submissionId;
-        console.log("Code is running with SubmissionId:", submissionId);
-        const ob ={
-          "submissionId":submissionId
+        const ob = {
+          "submissionId": submissionId
         }
         // Set up an interval to query the server every 2 seconds (adjust the interval as needed)
         const intervalId = setInterval(() => {
@@ -171,11 +168,13 @@ int main(){
           Requests.getSubmission(ob)
             .then((statusRes) => {
               const status = statusRes.data.status;
+
               console.log("Code execution status:", status);
               // Check if the code execution is completed
               if (status === "Completed") {
                 // Code execution completed, do something with the result if needed
                 console.log("execution completed ", statusRes);
+                setExecuteObj(statusRes.data);
                 clearInterval(intervalId); // Clear the interval since the execution is completed
                 setTestCasesPassed(statusRes.data.passedTestCases)
                 setTotalTestCases(statusRes.data.totalcases)
@@ -201,7 +200,7 @@ int main(){
         setSubmitting(false);
         // Handle the initial run code request error if needed
       });
-   };
+  };
 
   function onChange(newValue) {
     const newvals = { ...values };
@@ -217,103 +216,101 @@ int main(){
 
       {/* Left Part */}
       <div className="w-1/2 border-r border-gray-300 p-4">
-      <div className="flex mb-4">
-        <button
-          className={`mr-4 focus:outline-none ${
-            activeTab === 'description' ? 'font-semibold' : 'font-normal'
-          }`}
-          onClick={() => handleTabChange('description')}
-        >
-          Description
-        </button>
-        <button
-          className={`focus:outline-none ${
-            activeTab === 'submission' ? 'font-semibold' : 'font-normal'
-          }`}
-          onClick={() => handleTabChange('submission')}
-        >
-          Submission
-        </button>
-      </div>
-      <div>
-      {activeTab === 'description' && (
-          <>
-            {/* Your existing description content here */}
-            <h1 className="text-2xl font-semibold mb-4">{problemdata.title}</h1>
-        <p><span className="font-bold">Description: </span>{problemdata.description}.</p>
-        <p><span className="font-bold">Difficulty Level: </span>{problemdata.difficultyLevel}.</p>
-        <p><span className="font-bold"> Input Format:</span>{problemdata.inputFormat}</p>
-        <p><span className="font-bold"> Memory Limit :</span>{problemdata.memoryLimitInMB}</p>
-        <p><span className="font-bold"> Ouput Format :</span>{problemdata.outputFormat}</p>
-        <div>
-          <div>
-            <span className="font-bold"> TestCases :</span>
-            {problemdata && problemdata.testCases ? (
-              problemdata.testCases.map((testCase, index) => (
-                <div key={testCase._id}>
-                  <h3>TestCase :{index + 1}</h3>
-                  <p>Input: {testCase.input}</p>
-                  <p>Output: {testCase.output}</p>
-                  <br /> <br />
-                </div>
-              ))
-            ) : (
-              <span>No test cases available</span>
-            )}
-            <div>
-              <p><span className="font-bold"> Time Limit  :</span>{problemdata.timeLimitInSeconds
-              } sec</p>
-            </div>
-            <div className="flex flex-wrap">
-              <span className="font-bold"> Tags :</span>
-              {problemdata && problemdata.tags ? (
-                problemdata.tags.map((tag, index) => (
-                  <div key={index} className="bg-gray-200 text-gray-700 rounded-full px-2 py-1 m-1">
-                    {tag}
-                  </div>
-                ))
-              ) : (
-                <span>No tags available</span>
-              )}
-            </div>
-          </div>
-
+        <div className="flex mb-4">
+          <button
+            className={`mr-4 focus:outline-none ${activeTab === 'description' ? 'font-semibold' : 'font-normal'
+              }`}
+            onClick={() => handleTabChange('description')}
+          >
+            Description
+          </button>
+          <button
+            className={`focus:outline-none ${activeTab === 'submission' ? 'font-semibold' : 'font-normal'
+              }`}
+            onClick={() => handleTabChange('submission')}
+          >
+            Submission
+          </button>
         </div>
-          </>
-        )}
-        {activeTab === 'submission' && (
-          <>
-                {submissions.length > 0 ? (
-        <ul>
-          {submissions.map((submission) => (
-              <li
-              key={submission._id}
-              className="border p-4 mb-4 rounded bg-gray-100"
-            >
-              <p>
-                <span className="font-bold">Status:</span> {submission.submissionStatus}
-              </p>
-              <p>
-                <span className="font-bold">Language:</span>{' '}
-                {submission.language}
-              </p>
-              <p>
-                <span className="font-bold">Timestamp:</span>{' '}
-                {new Date(submission.timestamp).toLocaleString()}
-              </p>
-              {/* Add more details as needed */}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No submissions available.</p>
-      )}
+        <div>
+          {activeTab === 'description' && (
+            <>
+              {/* Your existing description content here */}
+              <h1 className="text-2xl font-semibold mb-4">{problemdata.title}</h1>
+              <p><span className="font-bold">Description: </span>{problemdata.description}.</p>
+              <p><span className="font-bold">Difficulty Level: </span>{problemdata.difficultyLevel}.</p>
+              <p><span className="font-bold"> Input Format:</span>{problemdata.inputFormat}</p>
+              <p><span className="font-bold"> Memory Limit :</span>{problemdata.memoryLimitInMB}</p>
+              <p><span className="font-bold"> Ouput Format :</span>{problemdata.outputFormat}</p>
+              <div>
+                <div>
+                  <span className="font-bold"> TestCases :</span>
+                  {problemdata && problemdata.testCases ? (
+                    problemdata.testCases.map((testCase, index) => (
+                      <div key={testCase._id}>
+                        <h3>TestCase :{index + 1}</h3>
+                        <p>Input: {testCase.input}</p>
+                        <p>Output: {testCase.output}</p>
+                        <br /> <br />
+                      </div>
+                    ))
+                  ) : (
+                    <span>No test cases available</span>
+                  )}
+                  <div>
+                    <p><span className="font-bold"> Time Limit  :</span>{problemdata.timeLimitInSeconds
+                    } sec</p>
+                  </div>
+                  <div className="flex flex-wrap">
+                    <span className="font-bold"> Tags :</span>
+                    {problemdata && problemdata.tags ? (
+                      problemdata.tags.map((tag, index) => (
+                        <div key={index} className="bg-gray-200 text-gray-700 rounded-full px-2 py-1 m-1">
+                          {tag}
+                        </div>
+                      ))
+                    ) : (
+                      <span>No tags available</span>
+                    )}
+                  </div>
+                </div>
 
-            {/* Add code to display user's previous submissions */}
-          </>
-        )}
-      </div>
-       
+              </div>
+            </>
+          )}
+          {activeTab === 'submission' && (
+            <>
+              {submissions.length > 0 ? (
+                <ul>
+                  {submissions.map((submission) => (
+                    <li
+                      key={submission._id}
+                      className="border p-4 mb-4 rounded bg-gray-100"
+                    >
+                      <p>
+                        <span className="font-bold">Status:</span> {submission.submissionStatus}
+                      </p>
+                      <p>
+                        <span className="font-bold">Language:</span>{' '}
+                        {submission.language}
+                      </p>
+                      <p>
+                        <span className="font-bold">Timestamp:</span>{' '}
+                        {new Date(submission.timestamp).toLocaleString()}
+                      </p>
+                      {/* Add more details as needed */}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No submissions available.</p>
+              )}
+
+              {/* Add code to display user's previous submissions */}
+            </>
+          )}
+        </div>
+
       </div>
 
       {/* Right Part */}
@@ -367,15 +364,24 @@ int main(){
         </div>
 
         {/* Test Case Input */}
-        <div className="mb-4">
+        <div className="mb-4 flex">
+          {/* Adjusted Textarea */}
           <textarea
             rows="4"
-            cols="50"
+            cols="25"
             value={testCaseInput}
             onChange={(e) => setTestCaseInput(e.target.value)}
             readOnly={!isCustomTestCase}
-            className="border p-2 w-full"
+            className="border p-2 flex-1 mr-2"
           />
+
+          {/* Result Box */}
+          <div className="border p-2 flex-1">
+            {/* Display results here */}
+            Error: {executedObj.error} <br />
+            Error at : {executedObj.errorAt} TestCase  <br />
+            Status : {executedObj.status} <br />
+          </div>
         </div>
 
         {/* Output */}
@@ -390,26 +396,33 @@ int main(){
             onClick={handleRunCode}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300"
           >
-          {
-              running ?  <div class="flex gap-2">
-                            <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
-                            <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
-                            <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
-                          </div> 
-                      : <div className="px-6">Run</div>
-          }
+            {
+              running ? <div class="flex gap-2">
+                <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+                <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+                <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+              </div>
+                : <div className="px-6">Run</div>
+            }
           </button>
           <button
             onClick={handleSubmitCode}
             className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300"
           >
-            Submit
+            {
+              submitting ? <div class="flex gap-2">
+                <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+                <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+                <div class="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+              </div>
+                : <div className="px-6">Submit</div>
+            }
           </button>
           {
-            totalTestCases===0  ? <p></p>
-                                : <p>{testCasesPassed}/{totalTestCases} Testcases Passed</p>
+            totalTestCases === 0 ? <p></p>
+              : <p>{testCasesPassed}/{totalTestCases} Testcases Passed</p>
           }
-         
+
         </div>
       </div>
     </div>
